@@ -18,6 +18,8 @@ func _ready() -> void:
 	add_to_group("Player")
 
 func _physics_process(delta: float) -> void:
+	if Input.is_action_just_pressed("ui_accept"):
+		print("[DEBUG] Player can_move current state:", can_move)
 	# If movement is disabled, smoothly decelerate to zero and play idle animation
 	if not can_move:
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
