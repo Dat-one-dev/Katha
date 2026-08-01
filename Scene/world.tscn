@@ -33,7 +33,9 @@
 [ext_resource type="Texture2D" uid="uid://d0x3mtc7of04v" path="res://FreeEnvironment/Art/Props/BulletinBoard_1.png" id="30_props"]
 [ext_resource type="Texture2D" uid="uid://df463qluc43lc" path="res://FreeEnvironment/Art/Rocks/Rock_Brown_1.png" id="31_rocks"]
 [ext_resource type="Texture2D" uid="uid://crejvhiu22taw" path="res://FreeEnvironment/Art/Rocks/Rock_Brown_2.png" id="32_rocks"]
+[ext_resource type="Shader" uid="uid://c2fx3x6ylum4g" path="res://Scene/World.gdshader" id="33_cvrfy"]
 [ext_resource type="Texture2D" uid="uid://utob4gk7yxes" path="res://FreeEnvironment/Art/Rocks/Rock_Brown_4.png" id="33_rocks"]
+[ext_resource type="Texture2D" uid="uid://d4vjq7pg1njf" path="res://assets/generated/light_texture_radial_frame_0.png" id="36_4of3l"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0gfnl"]
 texture = ExtResource("2_pcvp0")
@@ -1081,6 +1083,14 @@ texture = ExtResource("4_vuxx2")
 [sub_resource type="TileSet" id="TileSet_jagve"]
 sources/0 = SubResource("TileSetAtlasSource_cvrfy")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vuxx2"]
+shader = ExtResource("33_cvrfy")
+shader_parameter/saturation = 1.12
+shader_parameter/contrast = 1.18
+shader_parameter/brightness = -0.04
+shader_parameter/vignette_strength = 0.25
+shader_parameter/warm = Vector3(1.05, 1, 0.94)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ta8wi"]
 size = Vector2(104.5, 1228)
 
@@ -1506,19 +1516,18 @@ scale = Vector2(1.5, 1.5)
 texture = ExtResource("19_trees")
 
 [node name="Player" parent="." unique_id=1491717697 groups=["Player"] instance=ExtResource("1_emx41")]
-position = Vector2(512, 688)
+position = Vector2(-512.9999, 308.00003)
 scale = Vector2(2.5, 2.5)
 script = ExtResource("2_dlwip")
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=356566252]
 
 [node name="Baap" parent="." unique_id=1676826856 instance=ExtResource("5_37axr")]
-position = Vector2(448, 352)
+position = Vector2(-319, 432)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=997493285]
 
 [node name="Control" type="Control" parent="CanvasLayer" unique_id=332886651]
-visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -1529,6 +1538,7 @@ metadata/_edit_use_anchors_ = true
 
 [node name="Lable" type="RichTextLabel" parent="CanvasLayer/Control" unique_id=123639696]
 unique_name_in_owner = true
+visible = false
 texture_filter = 1
 layout_mode = 1
 anchors_preset = 12
@@ -1544,6 +1554,16 @@ text = "saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 fit_content = true
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/Control" unique_id=257591428]
+texture_filter = 1
+material = SubResource("ShaderMaterial_vuxx2")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DialogueUI" type="Control" parent="CanvasLayer" unique_id=1292301311]
 layout_mode = 3
@@ -1597,3 +1617,8 @@ shape = SubResource("RectangleShape2D_ta8wi")
 position = Vector2(-467, 834)
 rotation = -1.5514995
 shape = SubResource("RectangleShape2D_ta8wi")
+
+[node name="Light" type="Node2D" parent="." unique_id=1853263918]
+
+[node name="PointLight2D" type="PointLight2D" parent="Light" unique_id=812967454]
+texture = ExtResource("36_4of3l")
