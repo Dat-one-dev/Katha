@@ -1,11 +1,21 @@
 [gd_scene format=3 uid="uid://bcin75dyjwkfa"]
 
 [ext_resource type="Script" uid="uid://dv8p7vrh6hy1u" path="res://Script/baap.gd" id="1_wsp2t"]
+[ext_resource type="Texture2D" uid="uid://chbo2itoo2na8" path="res://assets/sprite.png" id="2_trud3"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jagve"]
 radius = 32.55764
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_jagve"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_trud3")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_yp4i6"]
 radius = 186.0672
@@ -18,12 +28,11 @@ position = Vector2(17, 17)
 shape = SubResource("CircleShape2D_jagve")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1250308030]
+texture_filter = 1
+position = Vector2(20, 17)
+scale = Vector2(1.06, 1.06)
 sprite_frames = SubResource("SpriteFrames_jagve")
-
-[node name="ColorRect" type="ColorRect" parent="." unique_id=53005307]
-offset_right = 40.0
-offset_bottom = 40.0
-color = Color(0.71623206, 0.00093354407, 0.8043747, 1)
+frame_progress = 0.083332166
 
 [node name="Area2D" type="Area2D" parent="." unique_id=507608304]
 

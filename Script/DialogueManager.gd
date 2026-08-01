@@ -24,6 +24,8 @@ var active_choices: Array = []
 var is_typing: bool = false
 var is_active: bool = false
 var is_awaiting_ai: bool = false
+var is_concluded: bool = false
+var is_waiting_for_read_confirm: bool = false # NEW: Pauses dialogue after typing ends
 
 var ui: PanelContainer
 var tween: Tween
@@ -45,19 +47,27 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_active:
 		return
 
-	# ESC / X to exit instantly
+	# 1. ESC / X to exit instantly
 	if event is InputEventKey and event.pressed and event.keycode == KEY_X or event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		end_dialogue()
 		return
 
-	# Interact to skip typing
+	# 2. INTERACT KEY (Space / Enter / E)
 	if event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
+		# If text is actively typing -> Skip typing animation
 		if is_typing:
 			get_viewport().set_input_as_handled()
 			finish_typing_instantly()
+			return
 
-## Opens dialogue window
+		# If text finished typing and player reads it -> Press Space to reveal choices
+		if is_waiting_for_read_confirm:
+			get_viewport().set_input_as_handled()
+			is_waiting_for_read_confirm = false
+			_display_choices()
+			return
+
 func start_ai_conversation(npc_name: String, personality: String, lore: String, story_goal: String, memory_ref: Array[Dictionary]) -> void:
 	if ui and ui != self:
 		await ui.start_ai_conversation(npc_name, personality, lore, story_goal, memory_ref)
@@ -71,6 +81,8 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 	current_lore = lore
 	current_story_goal = story_goal
 	current_memory = memory_ref
+	is_concluded = false
+	is_waiting_for_read_confirm = false
 
 	is_active = true
 	toggle_player_movement(false)
@@ -83,6 +95,7 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 
 func _send_prompt_to_ai(prompt: String) -> void:
 	is_awaiting_ai = true
+	is_waiting_for_read_confirm = false
 	clear_choices()
 	show_text("* (Thinking...)")
 
@@ -103,8 +116,11 @@ func _send_prompt_to_ai(prompt: String) -> void:
 
 	var ai_reply: String = ai_response.get("dialogue", "...")
 	active_choices = ai_response.get("choices", [])
+	is_concluded = ai_response.get("is_concluded", false)
 	
-	if not active_choices.has("Goodbye."):
+	if is_concluded or active_choices.is_empty():
+		active_choices = ["(Leave conversation)"]
+	elif not active_choices.has("Goodbye."):
 		active_choices.append("Goodbye.")
 
 	current_memory.append({"role": "assistant", "content": ai_reply})
@@ -118,26 +134,29 @@ func _send_prompt_to_ai(prompt: String) -> void:
 		ai_reply = "* " + ai_reply
 		
 	show_text(ai_reply)
-
 func show_text(text: String) -> void:
 	if not label:
 		return
 
 	clear_choices()
-	
-	# Show dialogue label when NPC speaks
 	label.show()
 
 	if typing_tween and typing_tween.is_running():
 		typing_tween.kill()
 
-	label.text = text
+	# Formats speaker name with BBCode color tags
+	var full_text: String = text
+	if not current_npc_name.is_empty() and text != "* (Thinking...)":
+		full_text = "[color=yellow]" + current_npc_name + ":[/color]\n" + text
+
+	label.text = full_text
 	label.visible_characters = 0
 	
 	var total_chars: int = label.get_total_character_count()
 	var duration: float = total_chars / characters_per_second
 
 	is_typing = true
+	is_waiting_for_read_confirm = false
 
 	typing_tween = create_tween()
 	typing_tween.tween_property(label, "visible_characters", total_chars, duration)\
@@ -146,9 +165,8 @@ func show_text(text: String) -> void:
 	
 	typing_tween.finished.connect(func():
 		is_typing = false
-		_display_choices()
+		_on_typing_completed()
 	)
-
 func finish_typing_instantly() -> void:
 	if not label:
 		return
@@ -158,20 +176,27 @@ func finish_typing_instantly() -> void:
 	
 	label.visible_characters = label.get_total_character_count()
 	is_typing = false
-	_display_choices()
+	_on_typing_completed()
 
-## Generates Undertale choices with proper padding, font, and centering
+## Triggered when text finishes typing. Waits for user to press Space/Interact before showing options!
+func _on_typing_completed() -> void:
+	# If the NPC was just "Thinking...", jump straight to getting the AI response
+	if is_awaiting_ai:
+		return
+		
+	is_waiting_for_read_confirm = true
+
+## Generates Undertale choices after player presses Space
 func _display_choices() -> void:
 	if is_awaiting_ai or not is_active or not choices_container:
 		return
 
-	# 1. Hide dialogue label so choices take over
+	# Hide dialogue text now that player confirmed reading it
 	if label:
 		label.hide()
 
 	clear_choices()
 
-	# 2. Configure container layout & inner margins
 	choices_container.show()
 	choices_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	choices_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -184,11 +209,10 @@ func _display_choices() -> void:
 		btn.text = "* " + option_text
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		
-		# --- Custom Font Override ---
 		if custom_font:
 			btn.add_theme_font_override("font", custom_font)
 			btn.add_theme_font_size_override("font_size", font_size)
-		elif label: # Fallback to label font if custom_font slot is empty
+		elif label:
 			var label_font = label.get_theme_font("font")
 			if label_font:
 				btn.add_theme_font_override("font", label_font)
@@ -196,10 +220,8 @@ func _display_choices() -> void:
 			if label_font_size > 0:
 				btn.add_theme_font_size_override("font_size", label_font_size)
 
-		# --- Transparent StyleBox with Left Padding ---
 		var flat_style = StyleBoxFlat.new()
 		flat_style.bg_color = Color(0, 0, 0, 0)
-		
 		flat_style.content_margin_left = 24.0
 		flat_style.content_margin_right = 24.0
 		flat_style.content_margin_top = 4.0
@@ -210,7 +232,6 @@ func _display_choices() -> void:
 		btn.add_theme_stylebox_override("pressed", flat_style)
 		btn.add_theme_stylebox_override("focus", flat_style)
 		
-		# Colors: White normal, Undertale Yellow on hover/focus
 		btn.add_theme_color_override("font_color", Color(1, 1, 1)) 
 		btn.add_theme_color_override("font_hover_color", Color(1, 1, 0)) 
 		btn.add_theme_color_override("font_focus_color", Color(1, 1, 0)) 
@@ -228,7 +249,7 @@ func clear_choices() -> void:
 		child.queue_free()
 
 func _on_choice_selected(choice_text: String) -> void:
-	if choice_text == "Goodbye.":
+	if choice_text == "Goodbye." or choice_text == "(Leave conversation)" or is_concluded:
 		end_dialogue()
 		return
 
@@ -240,6 +261,7 @@ func end_dialogue() -> void:
 
 	is_active = false
 	is_awaiting_ai = false
+	is_waiting_for_read_confirm = false
 
 	clear_choices()
 	if label:
