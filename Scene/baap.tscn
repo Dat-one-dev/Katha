@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://bcin75dyjwkfa"]
+
+[ext_resource type="Script" uid="uid://dv8p7vrh6hy1u" path="res://Script/baap.gd" id="1_wsp2t"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jagve"]
+radius = 32.55764
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jagve"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_yp4i6"]
+radius = 186.0672
+
+[node name="Baap" type="CharacterBody2D" unique_id=1676826856]
+script = ExtResource("1_wsp2t")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=515692847]
+position = Vector2(17, 17)
+shape = SubResource("CircleShape2D_jagve")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1250308030]
+sprite_frames = SubResource("SpriteFrames_jagve")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=53005307]
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.71623206, 0.00093354407, 0.8043747, 1)
+
+[node name="Area2D" type="Area2D" parent="." unique_id=507608304]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1492545749]
+position = Vector2(53, 38)
+shape = SubResource("CircleShape2D_yp4i6")
+
+[connection signal="body_entered" from="Area2D" to="." method="_on_body_entered"]
