@@ -9,10 +9,15 @@ extends PanelContainer
 
 @onready var dialogue_box: Control = self
 
+# --- Custom Font Exports ---
+@export var custom_font: Font
+@export var font_size: int = 16
+
 # --- State Variables ---
 var current_npc_name: String = ""
 var current_personality: String = ""
 var current_lore: String = ""
+var current_story_goal: String = ""
 var current_memory: Array[Dictionary] = []
 var active_choices: Array = []
 
@@ -46,16 +51,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		end_dialogue()
 		return
 
-	# Skip text animation on press
+	# Interact to skip typing
 	if event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		if is_typing:
 			get_viewport().set_input_as_handled()
 			finish_typing_instantly()
 
-## Opens dialogue window for ANY NPC dynamically
-func start_ai_conversation(npc_name: String, personality: String, lore: String, memory_ref: Array[Dictionary]) -> void:
+## Opens dialogue window
+func start_ai_conversation(npc_name: String, personality: String, lore: String, story_goal: String, memory_ref: Array[Dictionary]) -> void:
 	if ui and ui != self:
-		await ui.start_ai_conversation(npc_name, personality, lore, memory_ref)
+		await ui.start_ai_conversation(npc_name, personality, lore, story_goal, memory_ref)
 		return
 
 	if is_active:
@@ -64,6 +69,7 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 	current_npc_name = npc_name
 	current_personality = personality
 	current_lore = lore
+	current_story_goal = story_goal
 	current_memory = memory_ref
 
 	is_active = true
@@ -71,21 +77,26 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 	fade_ui(true)
 
 	if current_memory.is_empty():
-		_send_prompt_to_ai("The player approaches you and greets you.")
+		_send_prompt_to_ai("The young boy Nachiketa approaches you and greets you.")
 	else:
-		_send_prompt_to_ai("The player approaches you again to speak.")
+		_send_prompt_to_ai("Nachiketa approaches you again to speak.")
 
 func _send_prompt_to_ai(prompt: String) -> void:
 	is_awaiting_ai = true
 	clear_choices()
-	show_text("Thinking...")
+	show_text("* (Thinking...)")
 
-	var is_system_trigger: bool = prompt.begins_with("The player approaches")
+	var is_system_trigger: bool = prompt.begins_with("The young boy Nachiketa")
 	if not is_system_trigger:
 		current_memory.append({"role": "user", "content": prompt})
 
-	# Request JSON response containing dialogue + generated choice options
-	var ai_response: Dictionary = await AIManager.ask(current_npc_name, current_personality, current_lore, current_memory)
+	var ai_response: Dictionary = await AIManager.ask(
+		current_npc_name, 
+		current_personality, 
+		current_lore, 
+		current_story_goal, 
+		current_memory
+	)
 
 	if not is_active:
 		return
@@ -93,7 +104,6 @@ func _send_prompt_to_ai(prompt: String) -> void:
 	var ai_reply: String = ai_response.get("dialogue", "...")
 	active_choices = ai_response.get("choices", [])
 	
-	# Always append Goodbye as an exit option
 	if not active_choices.has("Goodbye."):
 		active_choices.append("Goodbye.")
 
@@ -103,6 +113,10 @@ func _send_prompt_to_ai(prompt: String) -> void:
 		current_memory = current_memory.slice(current_memory.size() - 12)
 
 	is_awaiting_ai = false
+	
+	if not ai_reply.begins_with("*"):
+		ai_reply = "* " + ai_reply
+		
 	show_text(ai_reply)
 
 func show_text(text: String) -> void:
@@ -110,6 +124,9 @@ func show_text(text: String) -> void:
 		return
 
 	clear_choices()
+	
+	# Show dialogue label when NPC speaks
+	label.show()
 
 	if typing_tween and typing_tween.is_running():
 		typing_tween.kill()
@@ -143,19 +160,66 @@ func finish_typing_instantly() -> void:
 	is_typing = false
 	_display_choices()
 
-## Dynamically builds button controls based on AI choices
+## Generates Undertale choices with proper padding, font, and centering
 func _display_choices() -> void:
 	if is_awaiting_ai or not is_active or not choices_container:
 		return
 
+	# 1. Hide dialogue label so choices take over
+	if label:
+		label.hide()
+
 	clear_choices()
 
-	for option_text in active_choices:
+	# 2. Configure container layout & inner margins
+	choices_container.show()
+	choices_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	choices_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	choices_container.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	for i in range(active_choices.size()):
+		var option_text = String(active_choices[i])
 		var btn = Button.new()
-		btn.text = "> " + String(option_text)
+		
+		btn.text = "* " + option_text
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.pressed.connect(_on_choice_selected.bind(String(option_text)))
+		
+		# --- Custom Font Override ---
+		if custom_font:
+			btn.add_theme_font_override("font", custom_font)
+			btn.add_theme_font_size_override("font_size", font_size)
+		elif label: # Fallback to label font if custom_font slot is empty
+			var label_font = label.get_theme_font("font")
+			if label_font:
+				btn.add_theme_font_override("font", label_font)
+			var label_font_size = label.get_theme_font_size("font_size")
+			if label_font_size > 0:
+				btn.add_theme_font_size_override("font_size", label_font_size)
+
+		# --- Transparent StyleBox with Left Padding ---
+		var flat_style = StyleBoxFlat.new()
+		flat_style.bg_color = Color(0, 0, 0, 0)
+		
+		flat_style.content_margin_left = 24.0
+		flat_style.content_margin_right = 24.0
+		flat_style.content_margin_top = 4.0
+		flat_style.content_margin_bottom = 4.0
+		
+		btn.add_theme_stylebox_override("normal", flat_style)
+		btn.add_theme_stylebox_override("hover", flat_style)
+		btn.add_theme_stylebox_override("pressed", flat_style)
+		btn.add_theme_stylebox_override("focus", flat_style)
+		
+		# Colors: White normal, Undertale Yellow on hover/focus
+		btn.add_theme_color_override("font_color", Color(1, 1, 1)) 
+		btn.add_theme_color_override("font_hover_color", Color(1, 1, 0)) 
+		btn.add_theme_color_override("font_focus_color", Color(1, 1, 0)) 
+		
+		btn.pressed.connect(_on_choice_selected.bind(option_text))
 		choices_container.add_child(btn)
+		
+		if i == 0:
+			btn.grab_focus()
 
 func clear_choices() -> void:
 	if not choices_container:
@@ -178,6 +242,8 @@ func end_dialogue() -> void:
 	is_awaiting_ai = false
 
 	clear_choices()
+	if label:
+		label.show()
 	fade_ui(false)
 	toggle_player_movement(true)
 
@@ -189,13 +255,9 @@ func fade_ui(fade_in: bool) -> void:
 
 	if fade_in:
 		dialogue_box.show()
-		tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.2)\
-			.set_trans(Tween.TRANS_SINE)\
-			.set_ease(Tween.EASE_OUT)
+		tween.tween_property(dialogue_box, "modulate:a", 1.0, 0.1)
 	else:
-		tween.tween_property(dialogue_box, "modulate:a", 0.0, 0.2)\
-			.set_trans(Tween.TRANS_SINE)\
-			.set_ease(Tween.EASE_IN)
+		tween.tween_property(dialogue_box, "modulate:a", 0.0, 0.1)
 		tween.finished.connect(dialogue_box.hide)
 
 func toggle_player_movement(enable: bool) -> void:

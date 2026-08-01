@@ -7,7 +7,6 @@
 [ext_resource type="Texture2D" uid="uid://ya523klh2ks3" path="res://FreeEnvironment/Art/Water and Sand/Tileset_Water.png" id="3_nka0b"]
 [ext_resource type="Texture2D" uid="uid://dau08jx11ajqd" path="res://FreeEnvironment/FreeEnvironment/FreePack.png" id="4_vuxx2"]
 [ext_resource type="PackedScene" uid="uid://bcin75dyjwkfa" path="res://Scene/baap.tscn" id="5_37axr"]
-[ext_resource type="FontFile" uid="uid://dk21xm50vhqqs" path="res://FOnt/Gar-A-MondTall-Antique.ttf" id="5_pcvp0"]
 [ext_resource type="Script" uid="uid://dsjr1jbpplsle" path="res://Script/DialogueManager.gd" id="6_ol2hl"]
 [ext_resource type="Texture2D" uid="uid://3kstg1ss1v4s" path="res://FreeEnvironment/Art/Buildings/House_Hay_2.png" id="7_bldgs"]
 [ext_resource type="Texture2D" uid="uid://djsdjcx2mml5k" path="res://FreeEnvironment/Art/Buildings/House_Hay_4_Purple.png" id="8_bldgs"]
@@ -35,6 +34,7 @@
 [ext_resource type="Texture2D" uid="uid://crejvhiu22taw" path="res://FreeEnvironment/Art/Rocks/Rock_Brown_2.png" id="32_rocks"]
 [ext_resource type="Shader" uid="uid://c2fx3x6ylum4g" path="res://Scene/World.gdshader" id="33_cvrfy"]
 [ext_resource type="Texture2D" uid="uid://utob4gk7yxes" path="res://FreeEnvironment/Art/Rocks/Rock_Brown_4.png" id="33_rocks"]
+[ext_resource type="FontFile" uid="uid://cyj8eje6o65hd" path="res://FOnt/determination.ttf" id="35_4of3l"]
 [ext_resource type="Texture2D" uid="uid://d4vjq7pg1njf" path="res://assets/generated/light_texture_radial_frame_0.png" id="36_4of3l"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0gfnl"]
@@ -1091,6 +1091,13 @@ shader_parameter/brightness = -0.04
 shader_parameter/vignette_strength = 0.25
 shader_parameter/warm = Vector3(1.05, 1, 0.94)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jagve"]
+bg_color = Color(0, 0, 0, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ta8wi"]
 size = Vector2(104.5, 1228)
 
@@ -1601,30 +1608,33 @@ grow_vertical = 2
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.8964844
+anchor_top = 0.6816406
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_jagve")
 script = ExtResource("6_ol2hl")
 label = NodePath("Label")
 choices_container = NodePath("ChoicesContainer")
+custom_font = ExtResource("35_4of3l")
 metadata/_edit_use_anchors_ = true
 
 [node name="Label" type="RichTextLabel" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=664328451]
 unique_name_in_owner = true
 texture_filter = 1
 layout_mode = 2
-theme_override_fonts/normal_font = ExtResource("5_pcvp0")
-theme_override_fonts/bold_font = ExtResource("5_pcvp0")
-theme_override_fonts/bold_italics_font = ExtResource("5_pcvp0")
-theme_override_fonts/italics_font = ExtResource("5_pcvp0")
-theme_override_fonts/mono_font = ExtResource("5_pcvp0")
+theme_override_fonts/normal_font = ExtResource("35_4of3l")
+theme_override_fonts/bold_font = ExtResource("35_4of3l")
+theme_override_fonts/bold_italics_font = ExtResource("35_4of3l")
+theme_override_fonts/italics_font = ExtResource("35_4of3l")
+theme_override_fonts/mono_font = ExtResource("35_4of3l")
 bbcode_enabled = true
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ChoicesContainer" type="VBoxContainer" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=283795323]
+texture_filter = 1
 layout_mode = 2
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1403811758]

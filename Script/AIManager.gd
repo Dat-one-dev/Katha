@@ -1,6 +1,5 @@
 extends Node
 
-# --- Configuration ---
 const API_KEY: String = "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"
 const API_URL: String = "https://api.groq.com/openai/v1/chat/completions"
 const MODEL: String = "llama-3.3-70b-versatile"
@@ -12,36 +11,35 @@ func _ready() -> void:
 	http_request.timeout = 10.0
 	add_child(http_request)
 
-## Sends conversation history to Groq and expects JSON containing dialogue & generated player choices.
-func ask(npc_name: String, personality: String, lore: String, memory: Array[Dictionary] = []) -> Dictionary:
-	if API_KEY.is_empty() or API_KEY == "gsk_YOUR_GROQ_API_KEY_HERE":
-		push_error("AIManager: API Key is missing!")
-		return {"dialogue": "Error: API Key is missing.", "choices": ["Goodbye."]}
+func ask(npc_name: String, personality: String, lore: String, story_goal: String, memory: Array[Dictionary] = []) -> Dictionary:
+	if API_KEY.is_empty():
+		return {"dialogue": "Error: API Key missing.", "choices": ["Goodbye."], "is_concluded": true}
 
 	var system_prompt: String = (
-		"You are an NPC named %s in a video game.\n" % npc_name +
+		"You are an NPC named %s in a game based on the Katha Upanishad.\n" % npc_name +
 		"Personality:\n%s\n" % personality +
 		"Lore:\n%s\n\n" % lore +
-		"Respond naturally in character. Keep responses under 35 words. Do NOT use markdown like *smiles*.\n" +
-		"Generate 3 natural, concise response/question choices the player could say back to you.\n\n" +
-		"CRITICAL: You MUST respond ONLY with a valid JSON object formatted EXACTLY as follows:\n" +
+		"STORY OBJECTIVE (Steer conversation toward this goal):\n%s\n\n" % story_goal +
+		"RULES:\n" +
+		"1. Keep spoken responses under 30 words. Do NOT use markdown like *smiles*.\n" +
+		"2. If the story goal has been fully expressed/achieved, set \"is_concluded\" to true and provide NO choices.\n" +
+		"3. If the conversation is ongoing, generate 2 to 3 concise player reply choices.\n\n" +
+		"Return ONLY a valid JSON object formatted as:\n" +
 		"{\n" +
-		'  "dialogue": "NPC spoken response here",\n' +
-		'  "choices": ["Choice option 1", "Choice option 2", "Choice option 3"]\n' +
+		'  "dialogue": "NPC response string",\n' +
+		'  "choices": ["Choice 1", "Choice 2"],\n' +
+		'  "is_concluded": false\n' +
 		"}"
 	)
 
-	var messages_payload: Array[Dictionary] = [
-		{"role": "system", "content": system_prompt}
-	]
-
+	var messages_payload: Array[Dictionary] = [{"role": "system", "content": system_prompt}]
 	messages_payload.append_array(memory)
 
 	var payload: Dictionary = {
 		"model": MODEL,
 		"messages": messages_payload,
 		"temperature": 0.7,
-		"response_format": {"type": "json_object"} # Forces strict JSON format
+		"response_format": {"type": "json_object"}
 	}
 
 	var json_body: String = JSON.stringify(payload)
@@ -55,27 +53,19 @@ func ask(npc_name: String, personality: String, lore: String, memory: Array[Dict
 
 	var err: Error = http_request.request(API_URL, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
-		push_error("AIManager: Request failed to initiate. Error code: %d" % err)
-		return {"dialogue": "[Connection Error]", "choices": ["Goodbye."]}
+		return {"dialogue": "[Connection Error]", "choices": ["Goodbye."], "is_concluded": true}
 
 	var result: Array = await http_request.request_completed
-	var status: int = result[0]
-	var response_code: int = result[1]
-	var body: PackedByteArray = result[3]
-
-	if status != HTTPRequest.RESULT_SUCCESS or response_code != 200:
-		push_error("AIManager: Request error %d" % response_code)
-		return {"dialogue": "... (The NPC stays silent)", "choices": ["Goodbye."]}
+	if result[0] != HTTPRequest.RESULT_SUCCESS or result[1] != 200:
+		return {"dialogue": "... (The NPC stays silent)", "choices": ["Goodbye."], "is_concluded": true}
 
 	var json: JSON = JSON.new()
-	if json.parse(body.get_string_from_utf8()) == OK:
+	if json.parse(result[3].get_string_from_utf8()) == OK:
 		var data = json.data
 		if data is Dictionary and data.has("choices") and data["choices"].size() > 0:
 			var raw_content: String = data["choices"][0].get("message", {}).get("content", "")
-			
-			# Parse inner JSON returned by Llama
 			var parsed_response: JSON = JSON.new()
 			if parsed_response.parse(raw_content) == OK and parsed_response.data is Dictionary:
 				return parsed_response.data
 
-	return {"dialogue": "...", "choices": ["Goodbye."]}
+	return {"dialogue": "...", "choices": ["Goodbye."], "is_concluded": true}

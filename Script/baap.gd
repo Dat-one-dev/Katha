@@ -1,11 +1,10 @@
 extends CharacterBody2D
 
-# 🌟 Inspector settings change per NPC!
-@export var npc_name: String = "Village Elder"
-@export var personality: String = "Wise, calm, and slightly secretive elder."
-@export_multiline var lore: String = "He has spent 80 years guarding the ancient banyan tree."
+@export var npc_name: String = "Vajasravasa"
+@export var personality: String = "Arrogant, stressed ritualist performing the Sarvamedha sacrifice. Easily annoyed."
+@export_multiline var lore: String = "He is giving away old, useless cows to gain spiritual merit."
+@export_multiline var story_goal: String = "Defend your sacrificial offerings. If Nachiketa asks who he will be given to, get angry and yell 'To Death I give you!'."
 
-# Each instance holds its unique conversation memory
 var memory: Array[Dictionary] = []
 var player_in_range: bool = false
 var is_talking: bool = false
@@ -25,5 +24,5 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func start_talk() -> void:
 	is_talking = true
-	await DialogueManager.start_ai_conversation(npc_name, personality, lore, memory)
+	await DialogueManager.start_ai_conversation(npc_name, personality, lore, story_goal, memory)
 	is_talking = false
