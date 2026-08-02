@@ -1,4 +1,4 @@
-extends Controls
+extends Control
 
 ## Script attached to Ending1.tscn to manage ending sprite display.
 

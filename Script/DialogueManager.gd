@@ -16,12 +16,14 @@ extends PanelContainer
 @export var font_size: int = 16
 
 # --- State Variables ---
+var current_npc: Node = null
 var current_npc_name: String = ""
 var current_personality: String = ""
 var current_lore: String = ""
-var current_story_goal: String = ""
+var current_stage_prompt: String = ""
+var current_stage_choices: Array = []
+var selected_choice_data: Dictionary = {}
 var current_memory: Array[Dictionary] = []
-var active_choices: Array = []
 
 var is_typing: bool = false
 var is_active: bool = false
@@ -29,6 +31,17 @@ var is_awaiting_ai: bool = false
 var is_concluded: bool = false
 var is_waiting_for_read_confirm: bool = false # Pauses dialogue after typing ends
 var current_ending: String = ""               # Stores "SATYA", "TYAKTA", or "LOBHA" when triggered
+
+# Dynamic Font & AI Choice text caching
+var determination_font: Font = null
+var generated_choices_text: Array = []
+var is_fetching_choices: bool = false
+
+# Coroutine handle for the in-flight background choices fetch.
+# We await this directly instead of busy-polling `get_tree()` every frame,
+# which crashed with a null SceneTree when the node left the tree mid-wait.
+var _pending_choices_fetch: Variant = null
+var _choices_fetch_token: int = 0
 
 var ui: PanelContainer
 var tween: Tween
@@ -46,6 +59,9 @@ func _ready() -> void:
 	dialogue_box.modulate.a = 0.0
 	dialogue_box.hide()
 	clear_choices()
+
+	# Load the determination font
+	determination_font = load("res://FOnt/determination.ttf")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -66,28 +82,28 @@ func _unhandled_input(event: InputEvent) -> void:
 			finish_typing_instantly()
 			return
 
-		# If text finished typing and player reads it -> Press Space to reveal choices
+		# If text finished typing and player reads it -> Press Space to advance
 		if is_waiting_for_read_confirm:
 			get_viewport().set_input_as_handled()
 			is_waiting_for_read_confirm = false
-			_display_choices()
+			_handle_read_confirmation()
 			return
 
 
-## Starts a new AI dialogue session with an NPC
-func start_ai_conversation(npc_name: String, personality: String, lore: String, story_goal: String, memory_ref: Array[Dictionary]) -> void:
+## Starts a new AI dialogue session with an NPC node
+func start_ai_conversation(npc: Node) -> void:
 	if ui and ui != self:
-		await ui.start_ai_conversation(npc_name, personality, lore, story_goal, memory_ref)
+		await ui.start_ai_conversation(npc)
 		return
 
 	if is_active:
 		return
 
-	current_npc_name = npc_name
-	current_personality = personality
-	current_lore = lore
-	current_story_goal = story_goal
-	current_memory = memory_ref
+	current_npc = npc
+	current_npc_name = npc.npc_name
+	current_personality = npc.personality
+	current_lore = npc.lore
+	current_memory = npc.memory
 	is_concluded = false
 	is_waiting_for_read_confirm = false
 	current_ending = "" # Reset ending on new conversation start
@@ -96,10 +112,70 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 	toggle_player_movement(false)
 	fade_ui(true)
 
-	if current_memory.is_empty():
-		_send_prompt_to_ai("The young boy Nachiketa approaches you and greets you.")
+	# Load current stage from NPC
+	var stage_idx: int = current_npc.current_stage
+	if stage_idx < 0 or stage_idx >= current_npc.stages.size():
+		push_error("DialogueManager: NPC current_stage out of bounds.")
+		end_dialogue()
+		return
+		
+	var stage_data: Dictionary = current_npc.stages[stage_idx]
+	current_stage_prompt = stage_data.get("prompt", "")
+	current_stage_choices = (stage_data.get("choices", []) as Array).duplicate(true)
+	selected_choice_data = {}
+
+	# Background load the choices for this starting stage
+	_pending_choices_fetch = _fetch_choices_for_current_stage()
+
+	# Instantly show the starting text of the current stage
+	var start_text: String = stage_data.get("stage_start_text", "")
+	if not start_text.is_empty():
+		if not start_text.begins_with("*"):
+			start_text = "* " + start_text
+		show_text(start_text)
 	else:
-		_send_prompt_to_ai("Nachiketa approaches you again to speak.")
+		_display_choices()
+
+
+## Background fetches AI-generated choice texts for the current stage
+func _fetch_choices_for_current_stage() -> void:
+	# Invalidate any older fetch still in flight, so a stale response can never
+	# overwrite the choices of a newer stage/conversation.
+	var fetch_token: int = _choices_fetch_token + 1
+	_choices_fetch_token = fetch_token
+	is_fetching_choices = true
+	generated_choices_text = []
+
+	var choice_descriptions: Array = []
+	for choice in current_stage_choices:
+		choice_descriptions.append(choice.get("description", choice.get("text", "")))
+
+	if choice_descriptions.is_empty():
+		is_fetching_choices = false
+		return
+
+	# Query AI for generated choice options
+	var ai_response: Dictionary = await AIManager.ask(
+		current_npc_name,
+		current_personality,
+		current_lore,
+		current_stage_prompt,
+		choice_descriptions,
+		current_memory
+	)
+
+	# A newer fetch, a dialogue exit, or a scene change may have superseded this one.
+	if fetch_token != _choices_fetch_token or not is_active or not is_inside_tree():
+		return
+
+	generated_choices_text = ai_response.get("choices", [])
+	
+	# Fallback to static text if AI choices are empty
+	if generated_choices_text.is_empty():
+		for choice in current_stage_choices:
+			generated_choices_text.append(choice.get("text", ""))
+
+	is_fetching_choices = false
 
 
 ## Sends prompt payload to AIManager and handles response
@@ -109,15 +185,20 @@ func _send_prompt_to_ai(prompt: String) -> void:
 	clear_choices()
 	show_text("* (Thinking...)")
 
-	var is_system_trigger: bool = prompt.begins_with("The young boy Nachiketa")
-	if not is_system_trigger:
-		current_memory.append({"role": "user", "content": prompt})
+	# Add choice prompt to memory
+	current_memory.append({"role": "user", "content": prompt})
+
+	# Get choice descriptions for the current stage to generate choices along with the dialogue response
+	var choice_descriptions: Array = []
+	for choice in current_stage_choices:
+		choice_descriptions.append(choice.get("description", choice.get("text", "")))
 
 	var ai_response: Dictionary = await AIManager.ask(
 		current_npc_name, 
 		current_personality, 
 		current_lore, 
-		current_story_goal, 
+		current_stage_prompt, 
+		choice_descriptions,
 		current_memory
 	)
 
@@ -125,14 +206,13 @@ func _send_prompt_to_ai(prompt: String) -> void:
 		return
 
 	var ai_reply: String = ai_response.get("dialogue", "...")
-	active_choices = ai_response.get("choices", [])
-	is_concluded = ai_response.get("is_concluded", false)
-	current_ending = ai_response.get("ending", "") # Extract ending ID from AI ("SATYA", "TYAKTA", "LOBHA")
+	generated_choices_text = ai_response.get("choices", [])
 	
-	if is_concluded or active_choices.is_empty():
-		active_choices = ["(Leave conversation)"]
-	elif not active_choices.has("Goodbye."):
-		active_choices.append("Goodbye.")
+	# Fallback if AI didn't generate choices
+	if generated_choices_text.is_empty():
+		generated_choices_text = []
+		for choice in current_stage_choices:
+			generated_choices_text.append(choice.get("text", ""))
 
 	current_memory.append({"role": "assistant", "content": ai_reply})
 
@@ -148,7 +228,7 @@ func _send_prompt_to_ai(prompt: String) -> void:
 	show_text(ai_reply)
 
 
-## Displays formatted text on screen with character typewriter effect
+## Displays formattedS text on screen with character typewriter effect
 func show_text(text: String) -> void:
 	if not label:
 		return
@@ -206,10 +286,66 @@ func _on_typing_completed() -> void:
 	is_waiting_for_read_confirm = true
 
 
+## Handles reading confirmation (Space / Accept) to advance dialogue or show choices
+func _handle_read_confirmation() -> void:
+	if not selected_choice_data.is_empty():
+		var choice = selected_choice_data
+		
+		# 1. If this choice concludes the conversation
+		if choice.get("concludes", false):
+			current_ending = choice.get("ending", "")
+			end_dialogue()
+			return
+
+		# 2. If this choice transitions the stage
+		var next_stage: int = choice.get("next_stage", -1)
+		if next_stage >= 0 and next_stage != current_npc.current_stage:
+			current_npc.current_stage = next_stage
+			current_npc.memory.clear()
+			current_memory = current_npc.memory
+			selected_choice_data = {}
+			
+			var stage_data: Dictionary = current_npc.stages[next_stage]
+			current_stage_prompt = stage_data.get("prompt", "")
+			current_stage_choices = (stage_data.get("choices", []) as Array).duplicate(true)
+			
+			# Asynchronously fetch choices for the new stage in background
+			_pending_choices_fetch = _fetch_choices_for_current_stage()
+			
+			var start_text: String = stage_data.get("stage_start_text", "")
+			if not start_text.is_empty():
+				if not start_text.begins_with("*"):
+					start_text = "* " + start_text
+				show_text(start_text)
+			else:
+				_display_choices()
+			return
+
+		# 3. Otherwise, stay in current stage, show choices again
+		selected_choice_data = {}
+		_display_choices()
+	else:
+		# Just finished showing stage start text, show choices
+		_display_choices()
+
+
 ## Generates choice buttons after player confirms reading
 func _display_choices() -> void:
 	if is_awaiting_ai or not is_active or not choices_container:
 		return
+
+	# Wait if background fetching is still in progress
+	if is_fetching_choices and _pending_choices_fetch != null:
+		show_text("* (Thinking...)")
+		is_awaiting_ai = true
+		await _pending_choices_fetch
+		_pending_choices_fetch = null
+		is_awaiting_ai = false
+		# Dialogue may have been exited or the node removed while we waited.
+		if not is_active or not is_inside_tree():
+			return
+		if label:
+			label.hide()
 
 	# Hide dialogue text now that player confirmed reading it
 	if label:
@@ -222,14 +358,32 @@ func _display_choices() -> void:
 	choices_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choices_container.alignment = BoxContainer.ALIGNMENT_CENTER
 
-	for i in range(active_choices.size()):
-		var option_text = String(active_choices[i])
+	var choices_to_show = current_stage_choices
+	if choices_to_show.is_empty():
+		choices_to_show = [{"text": "(Leave conversation)", "concludes": true}]
+
+	for i in range(choices_to_show.size()):
+		var choice_data = choices_to_show[i]
+		
+		# Get dynamic AI-generated text if available, fallback to static text
+		var option_text = ""
+		if i < generated_choices_text.size():
+			option_text = String(generated_choices_text[i])
+		if option_text.is_empty():
+			option_text = choice_data.get("text", "")
+
 		var btn = Button.new()
 		
 		btn.text = "* " + option_text
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		
-		if custom_font:
+		# Apply determination font
+		if determination_font:
+			btn.add_theme_font_override("font", determination_font)
+			btn.add_theme_font_size_override("font_size", font_size)
+		elif custom_font:
 			btn.add_theme_font_override("font", custom_font)
 			btn.add_theme_font_size_override("font_size", font_size)
 		elif label:
@@ -256,7 +410,7 @@ func _display_choices() -> void:
 		btn.add_theme_color_override("font_hover_color", Color(1, 1, 0)) 
 		btn.add_theme_color_override("font_focus_color", Color(1, 1, 0)) 
 		
-		btn.pressed.connect(_on_choice_selected.bind(option_text))
+		btn.pressed.connect(_on_choice_selected.bind(choice_data, i))
 		choices_container.add_child(btn)
 		
 		if i == 0:
@@ -272,10 +426,22 @@ func clear_choices() -> void:
 
 
 ## Handles choice button selection
-func _on_choice_selected(choice_text: String) -> void:
+func _on_choice_selected(choice: Dictionary, index: int = -1) -> void:
+	var choice_text = choice.get("text", "")
 	if choice_text == "Goodbye." or choice_text == "(Leave conversation)" or is_concluded:
 		end_dialogue()
 		return
+
+	selected_choice_data = choice
+
+	# Once a "side question" (one that doesn't end/advance the stage) has been asked,
+	# remove it from the pool so it can't be picked again and the same exchange
+	# doesn't keep looping back into the menu.
+	if not choice.get("concludes", false) and index >= 0 and index < current_stage_choices.size():
+		if current_stage_choices[index] == choice:
+			current_stage_choices.remove_at(index)
+			if index < generated_choices_text.size():
+				generated_choices_text.remove_at(index)
 
 	_send_prompt_to_ai(choice_text)
 
@@ -288,6 +454,8 @@ func end_dialogue() -> void:
 	is_active = false
 	is_awaiting_ai = false
 	is_waiting_for_read_confirm = false
+	is_fetching_choices = false
+	_pending_choices_fetch = null
 
 	clear_choices()
 	if label:

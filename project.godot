@@ -23,8 +23,8 @@ SceneTransition="*uid://bxb42ifxm77w4"
 
 [display]
 
-window/size/viewport_width=512
-window/size/viewport_height=512
+window/size/viewport_width=600
+window/size/viewport_height=600
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

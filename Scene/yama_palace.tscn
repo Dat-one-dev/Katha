@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://6uv6sn2my201" path="res://assets/Thronet.png" id="10_o00sd"]
 [ext_resource type="PackedScene" uid="uid://2wq6mn04pec6" path="res://Scene/yamraj.tscn" id="11_y5poa"]
 [ext_resource type="AudioStream" uid="uid://ba1d5o2s7j0tl" path="res://audio/village.mp3" id="12_do16n"]
+[ext_resource type="Texture2D" uid="uid://q805k477xl3u" path="res://01e0a644-4ed6-427e-9fb6-de8d15aaabc5.png" id="13_4d7fn"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ce4gp"]
 texture = ExtResource("1_oi4fs")
@@ -1043,21 +1044,6 @@ texture = ExtResource("1_oi4fs")
 [sub_resource type="TileSet" id="TileSet_78ux2"]
 sources/0 = SubResource("TileSetAtlasSource_ce4gp")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_o00sd"]
-shader = ExtResource("3_ce4gp")
-shader_parameter/saturation = 1.12
-shader_parameter/contrast = 1.18
-shader_parameter/brightness = -0.04
-shader_parameter/vignette_strength = 0.25
-shader_parameter/warm = Vector3(1.05, 1, 0.94)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y5poa"]
-bg_color = Color(0, 0, 0, 1)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jagve"]
 size = Vector2(62, 959)
 
@@ -1197,6 +1183,21 @@ occlusion_layer_0/light_mask = 1
 physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_y5poa")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ktl2f"]
+shader = ExtResource("3_ce4gp")
+shader_parameter/saturation = 1.12
+shader_parameter/contrast = 1.18
+shader_parameter/brightness = -0.04
+shader_parameter/vignette_strength = 0.25
+shader_parameter/warm = Vector3(1.05, 1, 0.94)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p0fjv"]
+bg_color = Color(0, 0, 0, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+
 [node name="Yama-Palace" type="Node2D" unique_id=119269813]
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=930169568]
@@ -1252,84 +1253,6 @@ position = Vector2(-512.9999, 308.00003)
 script = ExtResource("2_oi4fs")
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=1477798164]
-
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1129663326]
-
-[node name="Control" type="Control" parent="CanvasLayer" unique_id=1593024441]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="Lable" type="RichTextLabel" parent="CanvasLayer/Control" unique_id=1376893753]
-unique_name_in_owner = true
-visible = false
-texture_filter = 1
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -23.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-text = "saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-"
-fit_content = true
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ColorRect" type="ColorRect" parent="CanvasLayer/Control" unique_id=1049755574]
-texture_filter = 1
-material = SubResource("ShaderMaterial_o00sd")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="DialogueUI" type="Control" parent="CanvasLayer" unique_id=1433788461]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="DialogueBox" type="PanelContainer" parent="CanvasLayer/DialogueUI" unique_id=1891264692]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.6816406
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_y5poa")
-script = ExtResource("4_7sg6t")
-metadata/_edit_use_anchors_ = true
-
-[node name="Label" type="RichTextLabel" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=31920579]
-unique_name_in_owner = true
-texture_filter = 1
-layout_mode = 2
-theme_override_fonts/normal_font = ExtResource("5_wvxq3")
-theme_override_fonts/bold_font = ExtResource("5_wvxq3")
-theme_override_fonts/bold_italics_font = ExtResource("5_wvxq3")
-theme_override_fonts/italics_font = ExtResource("5_wvxq3")
-theme_override_fonts/mono_font = ExtResource("5_wvxq3")
-bbcode_enabled = true
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ChoicesContainer" type="VBoxContainer" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=743751008]
-texture_filter = 1
-layout_mode = 2
 
 [node name="Borders" type="StaticBody2D" parent="." unique_id=1195634203]
 
@@ -1561,3 +1484,107 @@ position = Vector2(-618, 91)
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1074489436]
 stream = ExtResource("12_do16n")
 autoplay = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1796276676]
+
+[node name="Control" type="Control" parent="CanvasLayer" unique_id=968807160]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Lable" type="RichTextLabel" parent="CanvasLayer/Control" unique_id=726938908]
+unique_name_in_owner = true
+visible = false
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+"
+fit_content = true
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/Control" unique_id=1876068169]
+texture_filter = 1
+material = SubResource("ShaderMaterial_ktl2f")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialogueUI" type="Control" parent="CanvasLayer" unique_id=120861697]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialogueBox" type="PanelContainer" parent="CanvasLayer/DialogueUI" unique_id=538249121]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.6816406
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_p0fjv")
+script = ExtResource("4_7sg6t")
+custom_font = ExtResource("5_wvxq3")
+metadata/_edit_use_anchors_ = true
+
+[node name="Label" type="RichTextLabel" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=2062547276]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("5_wvxq3")
+theme_override_fonts/bold_font = ExtResource("5_wvxq3")
+theme_override_fonts/bold_italics_font = ExtResource("5_wvxq3")
+theme_override_fonts/italics_font = ExtResource("5_wvxq3")
+theme_override_fonts/mono_font = ExtResource("5_wvxq3")
+bbcode_enabled = true
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=1939457893]
+texture_filter = 1
+layout_mode = 2
+
+[node name="FadeRect" type="ColorRect" parent="CanvasLayer" unique_id=1253917637]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -6.1035156e-05
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="FadeRect" type="TextureRect" parent="CanvasLayer/FadeRect" unique_id=714811319]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -20.000002
+offset_top = 87.0
+offset_right = 1140.0
+offset_bottom = 516.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.325, 0.325)
+texture = ExtResource("13_4d7fn")

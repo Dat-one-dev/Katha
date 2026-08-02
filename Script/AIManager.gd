@@ -11,30 +11,33 @@ func _ready() -> void:
 	http_request.timeout = 10.0
 	add_child(http_request)
 
-func ask(npc_name: String, personality: String, lore: String, story_goal: String, memory: Array[Dictionary] = []) -> Dictionary:
+func ask(npc_name: String, personality: String, lore: String, stage_prompt: String, choice_descriptions: Array, memory: Array[Dictionary] = []) -> Dictionary:
 	if API_KEY.is_empty():
-		return {"dialogue": "Error: API Key missing.", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
+		return {"dialogue": "Error: API Key missing.", "choices": []}
+
+	var choice_prompt_text := ""
+	if not choice_descriptions.is_empty():
+		choice_prompt_text = "\nGenerate exactly %d respectful, in-character response choices for Nachiketa (in first person, no markdown, under 15 words each) matching these descriptions in the exact same order:\n" % choice_descriptions.size()
+		for i in range(choice_descriptions.size()):
+			choice_prompt_text += "Choice %d: %s\n" % [i + 1, choice_descriptions[i]]
+		choice_prompt_text += "Include these in the 'choices' list of the JSON response.\n"
 
 	var system_prompt: String = (
 		"You are an NPC named %s in a game based on the Katha Upanishad.\n" % npc_name +
 		"Personality:\n%s\n" % personality +
 		"Lore:\n%s\n\n" % lore +
-		"STORY OBJECTIVE (Steer conversation toward this goal):\n%s\n\n" % story_goal +
+		"CURRENT STAGE OBJECTIVE:\n%s\n\n" % stage_prompt +
 		"RULES:\n" +
 		"1. Keep spoken responses under 30 words. Do NOT use markdown like *smiles*.\n" +
-		"2. If the story goal/boons are fully concluded or the player makes a definitive path choice, set \"is_concluded\" to true and provide NO choices.\n" +
-		"3. If \"is_concluded\" is true, analyze the conversation history and set \"ending\" to ONE of these three values:\n" +
-		"   - \"SATYA\": If player chose ultimate truth/Self-knowledge, rejecting material desires.\n" +
-		"   - \"TYAKTA\": If player chose duty, sacrificial wisdom, or noble worldly responsibility.\n" +
-		"   - \"LOBHA\": If player succumbed to temptation, wealth, power, or worldly pleasures.\n" +
-		"   If \"is_concluded\" is false, set \"ending\" to \"\".\n" +
-		"4. If ongoing, generate 2 to 3 concise player choices.\n\n" +
+		"2. Speak directly to Nachiketa as your character.\n" +
+		"3. The conversation history below already contains everything said so far. Read it before replying.\n" +
+		"4. Never repeat a point, question, or line you (or Nachiketa) already made earlier in the history. Always move the conversation forward and directly answer Nachiketa's latest message.\n" +
+		"5. If the CURRENT STAGE OBJECTIVE has already been fulfilled earlier in the history, do not restate it — build on it instead.\n" +
+		choice_prompt_text + "\n" +
 		"Return ONLY a valid JSON object formatted as:\n" +
 		"{\n" +
 		'  "dialogue": "NPC response string",\n' +
-		'  "choices": ["Choice 1", "Choice 2"],\n' +
-		'  "is_concluded": false,\n' +
-		'  "ending": ""\n' +
+		'  "choices": ["Generated Choice 1", "Generated Choice 2"]\n' +
 		"}"
 	)
 
@@ -59,11 +62,11 @@ func ask(npc_name: String, personality: String, lore: String, story_goal: String
 
 	var err: Error = http_request.request(API_URL, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
-		return {"dialogue": "[Connection Error]", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
+		return {"dialogue": "[Connection Error]", "choices": []}
 
 	var result: Array = await http_request.request_completed
 	if result[0] != HTTPRequest.RESULT_SUCCESS or result[1] != 200:
-		return {"dialogue": "... (The NPC stays silent)", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
+		return {"dialogue": "... (The NPC stays silent)", "choices": []}
 
 	var json: JSON = JSON.new()
 	if json.parse(result[3].get_string_from_utf8()) == OK:
@@ -74,4 +77,4 @@ func ask(npc_name: String, personality: String, lore: String, story_goal: String
 			if parsed_response.parse(raw_content) == OK and parsed_response.data is Dictionary:
 				return parsed_response.data
 
-	return {"dialogue": "...", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
+	return {"dialogue": "...", "choices": []}

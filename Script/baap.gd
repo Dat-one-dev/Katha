@@ -36,22 +36,58 @@ He genuinely believes he is performing Dharma, yet his attachment to
 wealth blinds him.
 """
 
-@export_multiline var story_goal: String = """
-Slowly reveal that the sacrifice is dishonest.
+@export_range(0, 2) var current_stage: int = 0
 
-Initially defend your actions.
-
-If Nachiketa questions the worth of the cows, become irritated.
-
-If he repeatedly asks,ss
-'To whom will you give me?'
-
-lose your temper and finally shout exactly:
-
-'To Death I give you!'
-
-After saying this, the conversation is concluded.
-"""
+var stages: Array[Dictionary] = [
+	# Stage 0: The Sacrifice
+	{
+		"stage_start_text": "Welcome, my son Nachiketa. See the grand sacrifice I perform! I am giving away my possessions to earn great merit in the eyes of the gods.",
+		"prompt": "Vajashravasa is performing the Vishwajit sacrifice. He is proud but defensive. He is donating old, useless cows. If Nachiketa asks about the cows, justify it as part of the ritual and get slightly annoyed. Speak directly, proudly, and defensively.",
+		"choices": [
+			{
+				"text": "Father, why are you donating these old, weak cows?",
+				"description": "Nachiketa asks why his father is donating old, weak cows.",
+				"next_stage": -1
+			},
+			{
+				"text": "These cows have eaten their last grass. What merit can you gain from this?",
+				"description": "Nachiketa points out the cows have eaten their last grass and asks what merit his father can gain.",
+				"next_stage": 1
+			}
+		]
+	},
+	# Stage 1: Nachiketa's Question
+	{
+		"stage_start_text": "How dare you question my sacrifice! You are just a boy. Go play and do not interfere in holy matters.",
+		"prompt": "Vajashravasa is angry that his son is questioning his ritual's integrity. If Nachiketa asks who he will be given to, ignore the question, dismiss him, or tell him to shut up. Speak with irritation and pride.",
+		"choices": [
+			{
+				"text": "A son is also a possession. To whom will you give me?",
+				"description": "Nachiketa asks his father to whom he will give him, since a son is also a possession.",
+				"next_stage": -1
+			},
+			{
+				"text": "Father, answer me. To whom will you give me?",
+				"description": "Nachiketa insists and asks again to whom he will be given.",
+				"next_stage": 2
+			}
+		]
+	},
+	# Stage 2: The Curse
+	{
+		"stage_start_text": "Silence, boy! Stop pestering me!",
+		"prompt": "Vajashravasa has reached his breaking point. If Nachiketa asks again who he will be given to, explode in anger and shout exactly: 'To Death I give you!'",
+		"choices": [
+			{
+				"text": "Father, for the third time: to whom will you give me?",
+				"description": "Nachiketa demands for the third time to know to whom he will be given.",
+				"next_stage": -1,
+				"concludes": true,
+				"ending": ""
+			}
+		]
+	}
+]
 
 # ==========================
 # GAMEPLAY & VISUALS
@@ -111,12 +147,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func start_talk() -> void:
 	is_talking = true
 
-	await DialogueManager.start_ai_conversation(
-		npc_name,
-		personality,
-		lore,
-		story_goal,
-		memory
-	)
+	await DialogueManager.start_ai_conversation(self)
 
 	is_talking = false
