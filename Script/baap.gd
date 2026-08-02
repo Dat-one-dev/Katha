@@ -43,7 +43,7 @@ Initially defend your actions.
 
 If Nachiketa questions the worth of the cows, become irritated.
 
-If he repeatedly asks,
+If he repeatedly asks,ss
 'To whom will you give me?'
 
 lose your temper and finally shout exactly:

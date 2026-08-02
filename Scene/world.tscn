@@ -38,7 +38,7 @@
 [ext_resource type="Texture2D" uid="uid://ccydjj46pm68" path="res://Scene/rope fence_small.png" id="37_vp2au"]
 [ext_resource type="Texture2D" uid="uid://bpc3j1c4tpavr" path="res://Script/WhatsApp_Image_2026-08-02_at_00.21.07-removebg-preview.png" id="38_x3fhw"]
 [ext_resource type="AudioStream" uid="uid://c1fhohwmwdvis" path="res://audio/Cow.mp3" id="39_uf6o4"]
-[ext_resource type="Texture2D" uid="uid://byt1dkmta227b" path="res://assets/altart.png" id="40_0phq3"]
+[ext_resource type="Texture2D" uid="uid://b4yty71llq6uy" path="res://assets/altart-sheet.png" id="40_n16x2"]
 [ext_resource type="AudioStream" uid="uid://cioegj2w2vyui" path="res://fire.mp3" id="41_fk7de"]
 [ext_resource type="Texture2D" uid="uid://cf6tlo2pfvwb8" path="res://light.png" id="41_n16x2"]
 
@@ -1209,8 +1209,58 @@ tile_size = Vector2i(12, 12)
 sources/0 = SubResource("TileSetAtlasSource_x3fhw")
 sources/1 = SubResource("TileSetAtlasSource_uf6o4")
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_fk7de"]
+atlas = ExtResource("40_n16x2")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_swl7y"]
+atlas = ExtResource("40_n16x2")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ncfgc"]
+atlas = ExtResource("40_n16x2")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flo70"]
+atlas = ExtResource("40_n16x2")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jagve"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fk7de")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_swl7y")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ncfgc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flo70")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_0phq3"]
 load_path = "res://.godot/imported/light.png-06e94102f0cce323cff7daad56cf3030.ctex"
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_n16x2"]
+polygon = PackedVector2Array(-310, 419, -326, 242, -137, 242)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_fk7de"]
+polygon = PackedVector2Array(-161, -140, -178, -289, 1, -136)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_swl7y"]
+polygon = PackedVector2Array(-264, 301, -307, 256, -264, 252)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_ncfgc"]
+polygon = PackedVector2Array(-83, 268, -114, 260, -92, 235)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_jagve"]
 
 [node name="World" type="Node2D" unique_id=245376685]
 
@@ -1892,11 +1942,12 @@ max_distance = 400.0
 
 [node name="Statc" type="StaticBody2D" parent="." unique_id=1200529315]
 
-[node name="Altart" type="Sprite2D" parent="Statc" unique_id=800222765]
+[node name="Altart" type="AnimatedSprite2D" parent="Statc" unique_id=1080438850]
 texture_filter = 1
 position = Vector2(-264, -51)
 scale = Vector2(2.755, 2.778)
-texture = ExtResource("40_0phq3")
+sprite_frames = SubResource("SpriteFrames_jagve")
+autoplay = "default"
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Statc" unique_id=278253032]
 polygon = PackedVector2Array(-291, -8, -300, -4, -307, -10, -311, -16, -307, -20, -313, -23, -324, -24, -325, -33, -320, -46, -305, -68, -297, -72, -295, -80, -276, -85, -265, -95, -256, -91, -252, -81, -244, -80, -231, -76, -217, -64, -212, -52, -203, -39, -201, -32, -197, -19, -209, -13, -222, -10, -237, -7, -244, -17, -248, -22, -251, -16, -273, -6, -275, -14, -269, -23, -278, -25)
@@ -1916,3 +1967,20 @@ position = Vector2(-250, -50)
 stream = ExtResource("41_fk7de")
 autoplay = true
 max_distance = 400.0
+
+[node name="LightOccluder2D6" type="LightOccluder2D" parent="." unique_id=216764707]
+occluder = SubResource("OccluderPolygon2D_n16x2")
+
+[node name="LightOccluder2D7" type="LightOccluder2D" parent="." unique_id=1399188777]
+occluder = SubResource("OccluderPolygon2D_fk7de")
+
+[node name="LightOccluder2D8" type="LightOccluder2D" parent="." unique_id=849950205]
+position = Vector2(-55, -240)
+occluder = SubResource("OccluderPolygon2D_swl7y")
+
+[node name="LightOccluder2D9" type="LightOccluder2D" parent="." unique_id=1285512421]
+position = Vector2(-55, -240)
+occluder = SubResource("OccluderPolygon2D_ncfgc")
+
+[node name="LightOccluder2D10" type="LightOccluder2D" parent="." unique_id=2110688511]
+occluder = SubResource("OccluderPolygon2D_jagve")
