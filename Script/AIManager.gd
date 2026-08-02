@@ -13,7 +13,7 @@ func _ready() -> void:
 
 func ask(npc_name: String, personality: String, lore: String, story_goal: String, memory: Array[Dictionary] = []) -> Dictionary:
 	if API_KEY.is_empty():
-		return {"dialogue": "Error: API Key missing.", "choices": ["Goodbye."], "is_concluded": true}
+		return {"dialogue": "Error: API Key missing.", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
 
 	var system_prompt: String = (
 		"You are an NPC named %s in a game based on the Katha Upanishad.\n" % npc_name +
@@ -22,13 +22,19 @@ func ask(npc_name: String, personality: String, lore: String, story_goal: String
 		"STORY OBJECTIVE (Steer conversation toward this goal):\n%s\n\n" % story_goal +
 		"RULES:\n" +
 		"1. Keep spoken responses under 30 words. Do NOT use markdown like *smiles*.\n" +
-		"2. If the story goal has been fully expressed/achieved, set \"is_concluded\" to true and provide NO choices.\n" +
-		"3. If the conversation is ongoing, generate 2 to 3 concise player reply choices.\n\n" +
+		"2. If the story goal/boons are fully concluded or the player makes a definitive path choice, set \"is_concluded\" to true and provide NO choices.\n" +
+		"3. If \"is_concluded\" is true, analyze the conversation history and set \"ending\" to ONE of these three values:\n" +
+		"   - \"SATYA\": If player chose ultimate truth/Self-knowledge, rejecting material desires.\n" +
+		"   - \"TYAKTA\": If player chose duty, sacrificial wisdom, or noble worldly responsibility.\n" +
+		"   - \"LOBHA\": If player succumbed to temptation, wealth, power, or worldly pleasures.\n" +
+		"   If \"is_concluded\" is false, set \"ending\" to \"\".\n" +
+		"4. If ongoing, generate 2 to 3 concise player choices.\n\n" +
 		"Return ONLY a valid JSON object formatted as:\n" +
 		"{\n" +
 		'  "dialogue": "NPC response string",\n' +
 		'  "choices": ["Choice 1", "Choice 2"],\n' +
-		'  "is_concluded": false\n' +
+		'  "is_concluded": false,\n' +
+		'  "ending": ""\n' +
 		"}"
 	)
 
@@ -53,11 +59,11 @@ func ask(npc_name: String, personality: String, lore: String, story_goal: String
 
 	var err: Error = http_request.request(API_URL, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
-		return {"dialogue": "[Connection Error]", "choices": ["Goodbye."], "is_concluded": true}
+		return {"dialogue": "[Connection Error]", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
 
 	var result: Array = await http_request.request_completed
 	if result[0] != HTTPRequest.RESULT_SUCCESS or result[1] != 200:
-		return {"dialogue": "... (The NPC stays silent)", "choices": ["Goodbye."], "is_concluded": true}
+		return {"dialogue": "... (The NPC stays silent)", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}
 
 	var json: JSON = JSON.new()
 	if json.parse(result[3].get_string_from_utf8()) == OK:
@@ -68,4 +74,4 @@ func ask(npc_name: String, personality: String, lore: String, story_goal: String
 			if parsed_response.parse(raw_content) == OK and parsed_response.data is Dictionary:
 				return parsed_response.data
 
-	return {"dialogue": "...", "choices": ["Goodbye."], "is_concluded": true}
+	return {"dialogue": "...", "choices": ["Goodbye."], "is_concluded": true, "ending": "LOBHA"}

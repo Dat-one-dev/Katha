@@ -1350,7 +1350,6 @@ layer_0/tile_data = PackedInt32Array(3997682, 0, 13, 4063218, 0, 14, 4128754, 0,
 
 [node name="Player" parent="." unique_id=1491717697 groups=["Player"] instance=ExtResource("1_emx41")]
 position = Vector2(-512.9999, 308.00003)
-scale = Vector2(2.5, 2.5)
 script = ExtResource("2_dlwip")
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=356566252]

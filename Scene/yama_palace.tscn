@@ -1249,7 +1249,6 @@ color = Color(0, 0, 0, 0.7137255)
 
 [node name="Player" parent="." unique_id=1491717697 groups=["Player"] instance=ExtResource("1_78ux2")]
 position = Vector2(-512.9999, 308.00003)
-scale = Vector2(2.5, 2.5)
 script = ExtResource("2_oi4fs")
 
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=1477798164]
@@ -1302,7 +1301,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DialogueBox" type="PanelContainer" parent="CanvasLayer/DialogueUI" unique_id=1891264692 node_paths=PackedStringArray("label", "choices_container")]
+[node name="DialogueBox" type="PanelContainer" parent="CanvasLayer/DialogueUI" unique_id=1891264692]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = -1
@@ -1313,9 +1312,6 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_y5poa")
 script = ExtResource("4_7sg6t")
-label = NodePath("Label")
-choices_container = NodePath("ChoicesContainer")
-custom_font = ExtResource("5_wvxq3")
 metadata/_edit_use_anchors_ = true
 
 [node name="Label" type="RichTextLabel" parent="CanvasLayer/DialogueUI/DialogueBox" unique_id=31920579]

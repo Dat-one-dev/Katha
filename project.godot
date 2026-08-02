@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 DialogueManager="*uid://dsjr1jbpplsle"
 AIManager="*uid://bl6vmc0kfn3k3"
+SceneTransition="*uid://bxb42ifxm77w4"
 
 [display]
 

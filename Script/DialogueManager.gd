@@ -1,5 +1,7 @@
 extends PanelContainer
 
+## Singleton/Global manager for handling UI dialogue, typing effects, and AI conversation flow.
+
 # --- Configurable Parameters ---
 @export_range(1.0, 100.0) var characters_per_second: float = 35.0
 
@@ -25,16 +27,18 @@ var is_typing: bool = false
 var is_active: bool = false
 var is_awaiting_ai: bool = false
 var is_concluded: bool = false
-var is_waiting_for_read_confirm: bool = false # NEW: Pauses dialogue after typing ends
+var is_waiting_for_read_confirm: bool = false # Pauses dialogue after typing ends
+var current_ending: String = ""               # Stores "SATYA", "TYAKTA", or "LOBHA" when triggered
 
 var ui: PanelContainer
 var tween: Tween
 var typing_tween: Tween
 
+
 func _ready() -> void:
 	if not label:
 		label = find_child("*Label*", true, false) as RichTextLabel
-	
+		
 	if not choices_container:
 		choices_container = find_child("*Choice*", true, false) as VBoxContainer
 
@@ -42,6 +46,7 @@ func _ready() -> void:
 	dialogue_box.modulate.a = 0.0
 	dialogue_box.hide()
 	clear_choices()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_active:
@@ -55,7 +60,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# 2. INTERACT KEY (Space / Enter / E)
 	if event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
-		# If text is actively typing -> Skip typing animation
+		# If text is actively typing -> Skip typing animation instantly
 		if is_typing:
 			get_viewport().set_input_as_handled()
 			finish_typing_instantly()
@@ -68,6 +73,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_display_choices()
 			return
 
+
+## Starts a new AI dialogue session with an NPC
 func start_ai_conversation(npc_name: String, personality: String, lore: String, story_goal: String, memory_ref: Array[Dictionary]) -> void:
 	if ui and ui != self:
 		await ui.start_ai_conversation(npc_name, personality, lore, story_goal, memory_ref)
@@ -83,6 +90,7 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 	current_memory = memory_ref
 	is_concluded = false
 	is_waiting_for_read_confirm = false
+	current_ending = "" # Reset ending on new conversation start
 
 	is_active = true
 	toggle_player_movement(false)
@@ -93,6 +101,8 @@ func start_ai_conversation(npc_name: String, personality: String, lore: String, 
 	else:
 		_send_prompt_to_ai("Nachiketa approaches you again to speak.")
 
+
+## Sends prompt payload to AIManager and handles response
 func _send_prompt_to_ai(prompt: String) -> void:
 	is_awaiting_ai = true
 	is_waiting_for_read_confirm = false
@@ -117,6 +127,7 @@ func _send_prompt_to_ai(prompt: String) -> void:
 	var ai_reply: String = ai_response.get("dialogue", "...")
 	active_choices = ai_response.get("choices", [])
 	is_concluded = ai_response.get("is_concluded", false)
+	current_ending = ai_response.get("ending", "") # Extract ending ID from AI ("SATYA", "TYAKTA", "LOBHA")
 	
 	if is_concluded or active_choices.is_empty():
 		active_choices = ["(Leave conversation)"]
@@ -125,6 +136,7 @@ func _send_prompt_to_ai(prompt: String) -> void:
 
 	current_memory.append({"role": "assistant", "content": ai_reply})
 
+	# Keep memory bounded to prevent payload bloat
 	if current_memory.size() > 12:
 		current_memory = current_memory.slice(current_memory.size() - 12)
 
@@ -134,6 +146,9 @@ func _send_prompt_to_ai(prompt: String) -> void:
 		ai_reply = "* " + ai_reply
 		
 	show_text(ai_reply)
+
+
+## Displays formatted text on screen with character typewriter effect
 func show_text(text: String) -> void:
 	if not label:
 		return
@@ -167,6 +182,9 @@ func show_text(text: String) -> void:
 		is_typing = false
 		_on_typing_completed()
 	)
+
+
+## Forces dialogue text to print instantly when interact key is pressed mid-type
 func finish_typing_instantly() -> void:
 	if not label:
 		return
@@ -178,15 +196,17 @@ func finish_typing_instantly() -> void:
 	is_typing = false
 	_on_typing_completed()
 
-## Triggered when text finishes typing. Waits for user to press Space/Interact before showing options!
+
+## Triggered when text finishes typing. Waits for user to press Space/Interact before showing options
 func _on_typing_completed() -> void:
-	# If the NPC was just "Thinking...", jump straight to getting the AI response
+	# If the NPC was just "Thinking...", jump straight to receiving the AI response
 	if is_awaiting_ai:
 		return
 		
 	is_waiting_for_read_confirm = true
 
-## Generates Undertale choices after player presses Space
+
+## Generates choice buttons after player confirms reading
 func _display_choices() -> void:
 	if is_awaiting_ai or not is_active or not choices_container:
 		return
@@ -242,12 +262,16 @@ func _display_choices() -> void:
 		if i == 0:
 			btn.grab_focus()
 
+
+## Clears existing choice buttons
 func clear_choices() -> void:
 	if not choices_container:
 		return
 	for child in choices_container.get_children():
 		child.queue_free()
 
+
+## Handles choice button selection
 func _on_choice_selected(choice_text: String) -> void:
 	if choice_text == "Goodbye." or choice_text == "(Leave conversation)" or is_concluded:
 		end_dialogue()
@@ -255,6 +279,8 @@ func _on_choice_selected(choice_text: String) -> void:
 
 	_send_prompt_to_ai(choice_text)
 
+
+## Closes dialogue window and triggers ending scene transition if an ending ID was received
 func end_dialogue() -> void:
 	if not is_active:
 		return
@@ -269,6 +295,12 @@ func end_dialogue() -> void:
 	fade_ui(false)
 	toggle_player_movement(true)
 
+	# --- TRIGGER ENDING TRANSITION IF AN ENDING WAS REACHED ---
+	if not current_ending.is_empty():
+		SceneTransition.change_to_ending(current_ending)
+
+
+## Smoothly fades the dialogue overlay in or out
 func fade_ui(fade_in: bool) -> void:
 	if tween and tween.is_running():
 		tween.kill()
@@ -282,6 +314,8 @@ func fade_ui(fade_in: bool) -> void:
 		tween.tween_property(dialogue_box, "modulate:a", 0.0, 0.1)
 		tween.finished.connect(dialogue_box.hide)
 
+
+## Toggles player character movement script state
 func toggle_player_movement(enable: bool) -> void:
 	var players = get_tree().get_nodes_in_group("Player")
 	for player in players:
