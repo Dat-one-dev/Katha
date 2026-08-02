@@ -37,12 +37,6 @@ var determination_font: Font = null
 var generated_choices_text: Array = []
 var is_fetching_choices: bool = false
 
-# Coroutine handle for the in-flight background choices fetch.
-# We await this directly instead of busy-polling `get_tree()` every frame,
-# which crashed with a null SceneTree when the node left the tree mid-wait.
-var _pending_choices_fetch: Variant = null
-var _choices_fetch_token: int = 0
-
 var ui: PanelContainer
 var tween: Tween
 var typing_tween: Tween
@@ -125,7 +119,7 @@ func start_ai_conversation(npc: Node) -> void:
 	selected_choice_data = {}
 
 	# Background load the choices for this starting stage
-	_pending_choices_fetch = _fetch_choices_for_current_stage()
+	_fetch_choices_for_current_stage()
 
 	# Instantly show the starting text of the current stage
 	var start_text: String = stage_data.get("stage_start_text", "")
@@ -139,10 +133,6 @@ func start_ai_conversation(npc: Node) -> void:
 
 ## Background fetches AI-generated choice texts for the current stage
 func _fetch_choices_for_current_stage() -> void:
-	# Invalidate any older fetch still in flight, so a stale response can never
-	# overwrite the choices of a newer stage/conversation.
-	var fetch_token: int = _choices_fetch_token + 1
-	_choices_fetch_token = fetch_token
 	is_fetching_choices = true
 	generated_choices_text = []
 
@@ -163,10 +153,6 @@ func _fetch_choices_for_current_stage() -> void:
 		choice_descriptions,
 		current_memory
 	)
-
-	# A newer fetch, a dialogue exit, or a scene change may have superseded this one.
-	if fetch_token != _choices_fetch_token or not is_active or not is_inside_tree():
-		return
 
 	generated_choices_text = ai_response.get("choices", [])
 	
@@ -228,7 +214,7 @@ func _send_prompt_to_ai(prompt: String) -> void:
 	show_text(ai_reply)
 
 
-## Displays formattedS text on screen with character typewriter effect
+## Displays formatted text on screen with character typewriter effect
 func show_text(text: String) -> void:
 	if not label:
 		return
@@ -310,7 +296,7 @@ func _handle_read_confirmation() -> void:
 			current_stage_choices = (stage_data.get("choices", []) as Array).duplicate(true)
 			
 			# Asynchronously fetch choices for the new stage in background
-			_pending_choices_fetch = _fetch_choices_for_current_stage()
+			_fetch_choices_for_current_stage()
 			
 			var start_text: String = stage_data.get("stage_start_text", "")
 			if not start_text.is_empty():
@@ -335,15 +321,12 @@ func _display_choices() -> void:
 		return
 
 	# Wait if background fetching is still in progress
-	if is_fetching_choices and _pending_choices_fetch != null:
+	if is_fetching_choices:
 		show_text("* (Thinking...)")
 		is_awaiting_ai = true
-		await _pending_choices_fetch
-		_pending_choices_fetch = null
+		while is_fetching_choices:
+			await get_tree().process_frame
 		is_awaiting_ai = false
-		# Dialogue may have been exited or the node removed while we waited.
-		if not is_active or not is_inside_tree():
-			return
 		if label:
 			label.hide()
 
@@ -358,9 +341,17 @@ func _display_choices() -> void:
 	choices_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choices_container.alignment = BoxContainer.ALIGNMENT_CENTER
 
-	var choices_to_show = current_stage_choices
+	var choices_to_show = current_stage_choices.duplicate(true)
 	if choices_to_show.is_empty():
 		choices_to_show = [{"text": "(Leave conversation)", "concludes": true}]
+
+	# The AI improvises one extra, fully original follow-up question beyond the
+	# scripted ones (see AIManager.ask). Show it as a bonus choice — it always
+	# just stays in the current stage, so it can never break story progression.
+	if generated_choices_text.size() > choices_to_show.size():
+		var bonus_text: String = String(generated_choices_text[choices_to_show.size()])
+		if not bonus_text.is_empty():
+			choices_to_show.append({"text": bonus_text, "next_stage": -1, "ai_improvised": true})
 
 	for i in range(choices_to_show.size()):
 		var choice_data = choices_to_show[i]
@@ -374,7 +365,7 @@ func _display_choices() -> void:
 
 		var btn = Button.new()
 		
-		btn.text = "* " + option_text
+		btn.text = ("~ " if choice_data.get("ai_improvised", false) else "* ") + option_text
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -406,7 +397,8 @@ func _display_choices() -> void:
 		btn.add_theme_stylebox_override("pressed", flat_style)
 		btn.add_theme_stylebox_override("focus", flat_style)
 		
-		btn.add_theme_color_override("font_color", Color(1, 1, 1)) 
+		var is_bonus: bool = choice_data.get("ai_improvised", false)
+		btn.add_theme_color_override("font_color", Color(0.6, 1, 1) if is_bonus else Color(1, 1, 1))
 		btn.add_theme_color_override("font_hover_color", Color(1, 1, 0)) 
 		btn.add_theme_color_override("font_focus_color", Color(1, 1, 0)) 
 		
@@ -454,8 +446,6 @@ func end_dialogue() -> void:
 	is_active = false
 	is_awaiting_ai = false
 	is_waiting_for_read_confirm = false
-	is_fetching_choices = false
-	_pending_choices_fetch = null
 
 	clear_choices()
 	if label:

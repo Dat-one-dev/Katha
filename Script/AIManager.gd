@@ -17,10 +17,18 @@ func ask(npc_name: String, personality: String, lore: String, stage_prompt: Stri
 
 	var choice_prompt_text := ""
 	if not choice_descriptions.is_empty():
-		choice_prompt_text = "\nGenerate exactly %d respectful, in-character response choices for Nachiketa (in first person, no markdown, under 15 words each) matching these descriptions in the exact same order:\n" % choice_descriptions.size()
+		choice_prompt_text = (
+			"\nNachiketa has %d possible intents right now. For each one, WRITE the actual line Nachiketa would say — " % choice_descriptions.size() +
+			"do not just reword the intent description, invent natural spoken phrasing in his voice (first person, no markdown, under 15 words each). " +
+			"Base each line on the CURRENT dialogue history so it responds to what was just said, not a generic template:\n"
+		)
 		for i in range(choice_descriptions.size()):
-			choice_prompt_text += "Choice %d: %s\n" % [i + 1, choice_descriptions[i]]
-		choice_prompt_text += "Include these in the 'choices' list of the JSON response.\n"
+			choice_prompt_text += "Intent %d: %s\n" % [i + 1, choice_descriptions[i]]
+		choice_prompt_text += (
+			"\nThen, AFTER those, improvise ONE extra original follow-up line Nachiketa could plausibly say next, based purely on the " +
+			"conversation so far and his personality — something NOT covered by the intents above. This one is fully your own creative addition.\n" +
+			"Put all of them, scripted lines first then your improvised one, as one flat list in 'choices' (total %d entries).\n" % (choice_descriptions.size() + 1)
+		)
 
 	var system_prompt: String = (
 		"You are an NPC named %s in a game based on the Katha Upanishad.\n" % npc_name +
@@ -37,7 +45,7 @@ func ask(npc_name: String, personality: String, lore: String, stage_prompt: Stri
 		"Return ONLY a valid JSON object formatted as:\n" +
 		"{\n" +
 		'  "dialogue": "NPC response string",\n' +
-		'  "choices": ["Generated Choice 1", "Generated Choice 2"]\n' +
+		'  "choices": ["Generated Choice 1", "Generated Choice 2", "..."]\n' +
 		"}"
 	)
 
@@ -47,7 +55,7 @@ func ask(npc_name: String, personality: String, lore: String, stage_prompt: Stri
 	var payload: Dictionary = {
 		"model": MODEL,
 		"messages": messages_payload,
-		"temperature": 0.7,
+		"temperature": 0.85,
 		"response_format": {"type": "json_object"}
 	}
 
