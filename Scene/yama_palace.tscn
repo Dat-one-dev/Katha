@@ -9,6 +9,9 @@
 [ext_resource type="Texture2D" uid="uid://brbi6tdc8qcrt" path="res://assets/torch_1.png" id="7_ce4gp"]
 [ext_resource type="Texture2D" uid="uid://cf6tlo2pfvwb8" path="res://light.png" id="8_7sg6t"]
 [ext_resource type="Texture2D" uid="uid://dww4lhb3td3ga" path="res://assets/decorative.png" id="9_wvxq3"]
+[ext_resource type="Texture2D" uid="uid://6uv6sn2my201" path="res://assets/Thronet.png" id="10_o00sd"]
+[ext_resource type="PackedScene" uid="uid://2wq6mn04pec6" path="res://Scene/yamraj.tscn" id="11_y5poa"]
+[ext_resource type="AudioStream" uid="uid://ba1d5o2s7j0tl" path="res://audio/village.mp3" id="12_do16n"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ce4gp"]
 texture = ExtResource("1_oi4fs")
@@ -1545,5 +1548,20 @@ texture_scale = 0.55
 
 [node name="TileMapLayer2" type="TileMapLayer" parent="." unique_id=2007838167]
 texture_filter = 1
-tile_map_data = PackedByteArray("AADi/wAAAAAJAAcAAADi/wEAAAAJAAgAAADj/wAAAAAJAAcAAADj/wEAAAAJAAgAAADk/wAAAAAJAAcAAADk/wEAAAAJAAgAAADl/wEAAAAJAAcAAADl/wIAAAAJAAgAAADk/wIAAAAJAAcAAADk/wMAAAAJAAgAAADl/wMAAAAJAAcAAADl/wQAAAAJAAgAAADk/wQAAAAJAAcAAADk/wUAAAAJAAgAAADj/wQAAAAJAAcAAADj/wUAAAAJAAgAAADi/wQAAAAJAAcAAADi/wUAAAAJAAgAAADm/wIAAAAJAAcAAADm/wMAAAAJAAgAAADn/wIAAAAJAAcAAADn/wMAAAAJAAgAAADo/wMAAAAJAAcAAADo/wQAAAAJAAgAAADo/wUAAAAJAAcAAADo/wYAAAAJAAgAAADW/wQAAAAJAAcAAADW/wUAAAAJAAgAAADg/wIAAAAJAAcAAADg/wMAAAAJAAgAAADD/wgAAAAJAAcAAADG/wAAAAAJAAgAAADL/wkAAAAJAAcAAADP/woAAAAJAAcAAADU/xEAAAAJAAcAAADY/xIAAAAJAAgAAADZ/wYAAAAJAAcAAADa//r/AAAJAAgAAADa////AAAJAAcAAADc/wAAAAAJAAgAAADc/xYAAAAJAAcAAADf//f/AAAJAAgAAADf/xgAAAAJAAcAAADj/xUAAAAJAAgAAADw/woAAAAJAAgAAADx/xkAAAAJAAcAAADy//j/AAAJAAgAAAA=")
+tile_map_data = PackedByteArray("AADh/xAAAAAJAAgAAADl/wIAAAAJAAgAAADn/wwAAAAJAAgAAADx/wEAAAAJAAgAAADE/wsAAAAJAAgAAADK/w4AAAAJAAgAAADK/xgAAAAJAAgAAADM//z/AAAJAAgAAADS/xAAAAAJAAgAAADT/xAAAAAJAAgAAADX/xgAAAAJAAgAAADj/xYAAAAJAAgAAADr/xgAAAAJAAgAAAA=")
 tile_set = SubResource("TileSet_jagve")
+
+[node name="Throne" type="StaticBody2D" parent="." unique_id=627292209]
+
+[node name="Sprite2D" type="Sprite2D" parent="Throne" unique_id=1271437411]
+texture_filter = 1
+position = Vector2(-594, 47)
+scale = Vector2(1.635, 1.635)
+texture = ExtResource("10_o00sd")
+
+[node name="Yamraj" parent="." unique_id=1676826856 instance=ExtResource("11_y5poa")]
+position = Vector2(-618, 91)
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1074489436]
+stream = ExtResource("12_do16n")
+autoplay = true

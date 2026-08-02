@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Katha"
-run/main_scene="uid://bqclcx26eml1x"
+run/main_scene="uid://ckus4sv88pmlj"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
