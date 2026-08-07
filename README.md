@@ -4,6 +4,12 @@ An AI-powered 2D adventure game based on the **Katha Upanishad (कठोपन�
 
 Built in **24 hours** for the **AAROH Hackathon** (https://www.aarohindia.com/) — **2nd Place in the Game Development category** (Trophy & Certificate in [`Aaroah/`](Aaroah/)).
 
+## Screenshots
+
+| | | |
+| --- | --- | --- |
+| ![Demo 1](Aaroah/Demo1.jpeg) | ![Demo 2](Aaroah/Demo2.jpeg) | ![Demo 3](Aaroah/Demo3.jpeg) |
+
 ---
 
 ## Why (कस्मात्)?
@@ -67,6 +73,11 @@ We are here to awaken curiosity and drive meaningful connection, turning data an
 - **Event:** AAROH (https://www.aarohindia.com/) — 24-hour hackathon with 4 competition domains (AI/ML, Cybersecurity, Game Development, Hardware & Simulations).
 - **Category:** Game Development, covering **Track 3** (AI-powered adaptive NPCs & dynamic storytelling) and **Track 4** (young audiences' limited interest in Indian history and culture).
 - **Result:** 2nd Place, Game Development.
+
+| Trophy | Certificate |
+| --- | --- |
+| ![Trophy](Aaroah/Trophy.jpeg) | ![Certificate](Aaroah/Certificate.jpeg) |
+
 - **Team सदस्य:**
   - **Kartik** (Leader) — Developer
   - **Yuvaraj** — Artist
