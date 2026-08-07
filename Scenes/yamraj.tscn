@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://2wq6mn04pec6"]
+
+[ext_resource type="Script" uid="uid://cqv5w5u0b04l0" path="res://Scripts/yamraj.gd" id="1_5vg2j"]
+[ext_resource type="Texture2D" uid="uid://dqu62yn0lm6jp" path="res://Assets/Sprites/Characters/yamraj.png" id="1_gxds8"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jagve"]
+radius = 32.55764
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_yp4i6"]
+radius = 186.0672
+
+[node name="Yamraj" type="CharacterBody2D" unique_id=1676826856]
+script = ExtResource("1_5vg2j")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=515692847]
+position = Vector2(21.999998, 13)
+rotation = 1.471076
+scale = Vector2(1.6, 1.6)
+shape = SubResource("CircleShape2D_jagve")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=507608304]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1492545749]
+position = Vector2(53, 38)
+shape = SubResource("CircleShape2D_yp4i6")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1628087116]
+texture_filter = 1
+position = Vector2(20, 17)
+texture = ExtResource("1_gxds8")
+
+[connection signal="body_entered" from="Area2D" to="." method="_on_body_entered"]
+[connection signal="body_exited" from="Area2D" to="." method="_on_body_exited"]

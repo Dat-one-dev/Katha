@@ -56,17 +56,29 @@ We are here to awaken curiosity and drive meaningful connection, turning data an
 
 1. Install [Godot 4](https://godotengine.org/) (project targets Godot 4.x).
 2. Clone the repo and open `project.godot`.
-3. `Script/AIManager.gd` (which contains the Groq API key and request logic) is intentionally **gitignored** — recreate it (see the shape of the `ask()` API used by `Script/DialogueManager.gd`) or supply your own key before running.
+3. `Scripts/AIManager.gd` holds the Groq API key (`gsk_...`) used for the AI dialogue. **Note:** it is currently committed to this repo — treat it as public and regenerate the key at console.groq.com if needed.
 4. Press Play. Walk up to an NPC and press the interact key (Space / Enter / E) to talk.
 
 ## Project Structure
 
-- `Script/` — GDScript: `AIManager.gd` (cloud AI calls), `DialogueManager.gd` (UI + dialogue flow), `yamraj.gd` / `baap.gd` (AI NPCs), `Player.gd`, `SceneTransition.gd`, `ending_1.gd`
-- `Scene/` — world, player, NPC and ending scenes
-- `assets/`, `FreeEnvironment/`, `Banyan.png` — art & environment assets
-- `Ending/` — the three ending artworks (SATYA, TYAKTA, LOBHA)
-- `Aaroah/` — hackathon materials: pitch deck (`Katha-PPT.pdf`), Trophy, Certificate
-- `fire.mp3` — ambient audio
+```
+KATHA/
+├── Assets/
+│   ├── Audio/                  fire, cow, village & yama ambience
+│   ├── Fonts/                  determination font + Garamond variants
+│   ├── FreeEnvironment/        free itch.io environment pack (buildings, props, trees...)
+│   ├── Generated/              generated light textures
+│   ├── Source/                 PSD/aseprite source files
+│   ├── Sprites/
+│   │   ├── Characters/         Yama, Nachiketa sheets, idol & run animations
+│   │   ├── Environment/        candles, torches, spikes, throne, banyan, light
+│   │   └── Endings/            the three ending artworks
+│   └── public-license.txt
+├── Scripts/                    GDScript: AIManager, DialogueManager, NPCs, Player...
+├── Scenes/                     world, player, NPC and ending scenes
+├── Aaroah/                     hackathon materials: pitch deck, trophy, certificate, screenshots
+└── project.godot
+```
 
 ## AAROH Hackathon
 

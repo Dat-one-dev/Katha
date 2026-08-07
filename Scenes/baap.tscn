@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://bcin75dyjwkfa"]
+
+[ext_resource type="Script" uid="uid://dv8p7vrh6hy1u" path="res://Scripts/baap.gd" id="1_wsp2t"]
+[ext_resource type="Texture2D" uid="uid://chbo2itoo2na8" path="res://Assets/Sprites/Characters/sprite.png" id="2_trud3"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jagve"]
+radius = 32.55764
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jagve"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_trud3")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_yp4i6"]
+radius = 186.0672
+
+[node name="Baap" type="CharacterBody2D" unique_id=1676826856]
+script = ExtResource("1_wsp2t")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=515692847]
+position = Vector2(17, 17)
+shape = SubResource("CircleShape2D_jagve")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1250308030]
+texture_filter = 1
+position = Vector2(20, 17)
+scale = Vector2(1.06, 1.06)
+sprite_frames = SubResource("SpriteFrames_jagve")
+frame_progress = 0.083332166
+
+[node name="Area2D" type="Area2D" parent="." unique_id=507608304]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1492545749]
+position = Vector2(53, 38)
+shape = SubResource("CircleShape2D_yp4i6")
+
+[connection signal="body_entered" from="Area2D" to="." method="_on_body_entered"]
+[connection signal="body_exited" from="Area2D" to="." method="_on_body_exited"]
